@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+from PyQt5.QtCore import QEventLoop, QTimer
 from PyQt5.QtWidgets import QApplication
 from aivideo_gui import MainWindow
 from video_service import ROOT, FormatChoice, VideoInfo
@@ -89,6 +90,30 @@ class GuiSettingsTests(unittest.TestCase):
             self.assertEqual((window.progress.minimum(), window.progress.maximum()), (0, 0))
             window.query_done(VideoInfo("B 站", "BV1vp37zDEVZ", "Example", "", (FormatChoice("64:AVC", "720P"),)), b"")
             self.assertTrue(window.progress.isHidden())
+            window.close()
+
+    def test_batch_mode_switches_input_and_shows_current_video(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory, patch("aivideo_gui.SETTINGS_PATH", Path(directory) / "settings.ini"):
+            window = MainWindow()
+            window.show()
+            window.batch_mode.click()
+            self.assertFalse(window.batch_input.isHidden())
+            self.assertTrue(window.url_input.isHidden())
+            self.assertTrue(window.download_button.isHidden())
+            self.assertEqual(window.query_button.text(), "开始批量下载")
+            info = VideoInfo("抖音", "https://www.douyin.com/video/123", "Example", "", (FormatChoice("high", "最高画质"),))
+            window.batch_item_started(1, 2, info.source)
+            window.batch_video_ready(info, b"", info.choices[0], 1, 2)
+            self.assertEqual(window.video_title.text(), "Example")
+            self.assertEqual(window.quality.currentData(), info.choices[0])
+            self.assertFalse(window.single_result.isHidden())
+            window.batch_input.setPlainText("https://v.douyin.com/another/")
+            with patch.object(window, "start_batch") as start:
+                window.query()
+                start.assert_called_once()
+            window.single_mode.click()
+            self.assertFalse(window.url_input.isHidden())
+            self.assertTrue(window.batch_input.isHidden())
             window.close()
 
 
