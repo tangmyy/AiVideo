@@ -173,8 +173,8 @@ def existing_video(info: VideoInfo, destination: str) -> Path | None:
 
 
 def _stream_download(urls: tuple[str, ...], target: Path, progress, start: int, span: int, bvid: str):
-    headers = {**HEADERS, "Referer": f"https://www.bilibili.com/video/{bvid}/"}
-    last_error = None
+    headers = {**HEADERS, "Referer": f"https://www.bilibili.com/video/{bvid}/", "Range": "bytes=0-"}
+    errors = []
     for url in urls:
         try:
             with requests.get(url, stream=True, timeout=(15, 45), headers=headers) as response:
@@ -192,9 +192,9 @@ def _stream_download(urls: tuple[str, ...], target: Path, progress, start: int, 
                 raise ValueError("下载结果为空文件")
             return
         except (requests.RequestException, OSError, ValueError) as error:
-            last_error = error
+            errors.append(f"{urlparse(url).hostname}: {error.__class__.__name__} {getattr(getattr(error, 'response', None), 'status_code', '')}")
             target.unlink(missing_ok=True)
-    raise RuntimeError(f"该画质的所有媒体地址均下载失败：{last_error}")
+    raise RuntimeError(f"该画质的所有媒体地址均下载失败（{'；'.join(errors)}）。请确认浏览器能播放该视频后重试")
 
 
 def _ffmpeg_path() -> str:

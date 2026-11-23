@@ -67,7 +67,7 @@ class VideoServiceTests(unittest.TestCase):
         calls = []
 
         def get(url, **kwargs):
-            calls.append((url, kwargs["headers"]["Referer"]))
+            calls.append((url, kwargs["headers"]["Referer"], kwargs["headers"]["Range"]))
             return Response(url == "primary")
 
         with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[1]) as directory, patch("video_service.requests.get", side_effect=get):
@@ -76,6 +76,7 @@ class VideoServiceTests(unittest.TestCase):
             self.assertEqual(target.read_bytes(), b"data")
         self.assertEqual([call[0] for call in calls], ["primary", "backup"])
         self.assertTrue(all(call[1].endswith("/video/BV1vp37zDEVZ/") for call in calls))
+        self.assertTrue(all(call[2] == "bytes=0-" for call in calls))
 
     def test_reuses_existing_video_in_destination(self):
         info = VideoInfo("B 站", "BV1vp37zDEVZ", "Example", "", ())

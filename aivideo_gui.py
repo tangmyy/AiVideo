@@ -228,7 +228,7 @@ class MainWindow(QMainWindow):
         self.worker = QueryWorker(text)
         self.worker.result.connect(self.query_done)
         self.worker.failed.connect(self.failed)
-        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.finished.connect(self.worker_finished)
         self.worker.start()
 
     def query_done(self, info, cover):
@@ -273,7 +273,7 @@ class MainWindow(QMainWindow):
         self.worker.progress_changed.connect(self.progress_changed)
         self.worker.completed.connect(self.download_done)
         self.worker.failed.connect(self.failed)
-        self.worker.finished.connect(self.worker.deleteLater)
+        self.worker.finished.connect(self.worker_finished)
         self.worker.start()
 
     def progress_changed(self, value, stage):
@@ -298,6 +298,12 @@ class MainWindow(QMainWindow):
         self.set_busy(False)
         self.status.setText(f"操作失败：{message}")
         self.status.setToolTip(message)
+
+    def worker_finished(self):
+        worker = self.sender()
+        if self.worker is worker:
+            self.worker = None
+        worker.deleteLater()
 
     def closeEvent(self, event):
         if self.worker is not None and self.worker.isRunning():
