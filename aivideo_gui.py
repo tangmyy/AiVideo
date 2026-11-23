@@ -1,19 +1,26 @@
 """Desktop entry point for Bilibili and Douyin downloads."""
 
 import sys
+import os
 from pathlib import Path
 
-from PyQt5.QtCore import Qt, QSettings, QThread, pyqtSignal
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt, QSize, QSettings, QThread, pyqtSignal
+from PyQt5.QtGui import QFont, QIcon, QPixmap
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog, QFrame, QGridLayout,
                              QHBoxLayout, QLabel, QLineEdit, QMainWindow, QProgressBar,
-                             QPushButton, QScrollArea, QVBoxLayout, QWidget)
+                             QPushButton, QScrollArea, QStyledItemDelegate, QVBoxLayout, QWidget)
 
 from video_service import ROOT, download_video, existing_video, fetch_cover, query_video
 from media_outputs import OutputOptions, produce_outputs
 
 
 SETTINGS_PATH = ROOT / ".user-settings.ini"
+
+
+class QualityItemDelegate(QStyledItemDelegate):
+    def sizeHint(self, option, index):
+        size = super().sizeHint(option, index)
+        return QSize(size.width(), max(size.height(), 40))
 
 
 class QueryWorker(QThread):
@@ -68,6 +75,17 @@ class MainWindow(QMainWindow):
         self.busy = False
         self.worker = None
         self.setWindowTitle("AiVideo · 视频下载工作台")
+        self.logo_pixmap = QPixmap()
+        for candidate in (os.getenv("ICON_PATH"), "icon_image/icons.png"):
+            if not candidate:
+                continue
+            icon_path = Path(candidate)
+            if not icon_path.is_absolute():
+                icon_path = ROOT / icon_path
+            if self.logo_pixmap.load(str(icon_path)):
+                break
+        if not self.logo_pixmap.isNull():
+            self.setWindowIcon(QIcon(self.logo_pixmap))
         self.resize(880, 660)
         self.setMinimumSize(650, 540)
         self.build_ui()
@@ -97,10 +115,10 @@ class MainWindow(QMainWindow):
 
     def card(self, parent, label):
         frame = QFrame()
-        frame.setObjectName("card")
+        frame.setObjectName("group")
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(23, 18, 23, 22)
-        layout.setSpacing(12)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
         layout.addWidget(self.section(label))
         parent.addWidget(frame)
         return layout
@@ -115,33 +133,43 @@ class MainWindow(QMainWindow):
         root.setObjectName("root")
         scroll.setWidget(root)
         outer = QVBoxLayout(root)
-        outer.setContentsMargins(36, 28, 36, 28)
-        outer.setSpacing(17)
-        brand = QLabel("A I V I D E O    /    DESKTOP")
+        outer.setContentsMargins(32, 24, 32, 24)
+        outer.setSpacing(26)
+        brand_row = QHBoxLayout()
+        if not self.logo_pixmap.isNull():
+            logo = QLabel()
+            logo.setPixmap(self.logo_pixmap.scaled(28, 28, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            logo.setFixedSize(32, 32)
+            brand_row.addWidget(logo)
+        brand = QLabel("AiVideo")
         brand.setObjectName("brand")
-        outer.addWidget(brand)
-        title = QLabel("把喜欢的视频，留在本地。")
+        brand_row.addWidget(brand)
+        brand_row.addStretch()
+        outer.addLayout(brand_row)
+        title = QLabel("视频下载")
         title.setObjectName("heading")
         outer.addWidget(title)
-        subtitle = QLabel("粘贴 B 站或抖音链接，查询封面与画质后再下载。")
+        subtitle = QLabel("粘贴链接，查看封面和画质，再选择需要的文件。")
         subtitle.setObjectName("subtitle")
         outer.addWidget(subtitle)
 
-        input_layout = self.card(outer, "01   视频链接")
+        input_layout = self.card(outer, "视频链接")
         input_row = QHBoxLayout()
         self.url_input = QLineEdit()
+        self.url_input.setMinimumHeight(44)
         self.url_input.setPlaceholderText("BV 号、视频链接，或包含抖音短链的分享文案")
         self.url_input.setClearButtonEnabled(True)
         self.url_input.textChanged.connect(self.invalidate)
         self.url_input.returnPressed.connect(self.query)
         input_row.addWidget(self.url_input, 1)
         self.query_button = QPushButton("查询视频")
+        self.query_button.setMinimumHeight(44)
         self.query_button.setObjectName("primary")
         self.query_button.clicked.connect(self.query)
         input_row.addWidget(self.query_button)
         input_layout.addLayout(input_row)
 
-        result_layout = self.card(outer, "02   查询结果")
+        result_layout = self.card(outer, "查询结果")
         result_row = QGridLayout()
         result_row.setHorizontalSpacing(22)
         result_row.setVerticalSpacing(16)
@@ -164,6 +192,8 @@ class MainWindow(QMainWindow):
         details.addStretch()
         details.addWidget(self.section("可用画质"))
         self.quality = QComboBox()
+        self.quality.setMinimumHeight(44)
+        self.quality.setItemDelegate(QualityItemDelegate(self.quality))
         self.quality.addItem("查询后选择画质")
         self.quality.setEnabled(False)
         details.addWidget(self.quality)
@@ -173,7 +203,7 @@ class MainWindow(QMainWindow):
         self.narrow_layout = False
         result_layout.addLayout(result_row)
 
-        save_layout = self.card(outer, "03   保存与下载")
+        save_layout = self.card(outer, "保存与下载")
         output_row = QHBoxLayout()
         output_row.addWidget(self.section("输出文件"))
         self.save_video = QCheckBox("视频")
@@ -181,17 +211,23 @@ class MainWindow(QMainWindow):
         self.save_wav = QCheckBox("WAV 音频")
         self.save_txt = QCheckBox("人声 TXT")
         for checkbox in (self.save_video, self.save_wav, self.save_txt):
+            checkbox.setMinimumHeight(44)
             output_row.addWidget(checkbox)
         output_row.addStretch()
         save_layout.addLayout(output_row)
+        save_layout.addSpacing(8)
+        save_layout.addWidget(self.section("保存目录"))
         save_row = QHBoxLayout()
         self.destination = QLineEdit(str(Path.home() / "Downloads"))
+        self.destination.setMinimumHeight(44)
         self.destination.setPlaceholderText("保存目录")
         save_row.addWidget(self.destination, 1)
         browse = QPushButton("选择目录")
+        browse.setMinimumHeight(44)
         browse.clicked.connect(self.choose_directory)
         save_row.addWidget(browse)
         self.download_button = QPushButton("开始下载")
+        self.download_button.setMinimumHeight(44)
         self.download_button.setObjectName("primary")
         self.download_button.setEnabled(False)
         self.download_button.clicked.connect(self.download)
@@ -365,6 +401,7 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    app.setFont(QFont("Microsoft YaHei", 10))
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())

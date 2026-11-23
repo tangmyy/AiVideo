@@ -1,27 +1,28 @@
-QWidget#root { background: #101719; color: #e9f1ee; font-family: "Microsoft YaHei UI"; font-size: 13px; }
-QScrollArea#scroll { background: #101719; border: none; }
-QLabel#brand { color: #73d3b0; font-size: 11px; font-weight: 700; }
-QLabel#heading { color: #f2f7f4; font-size: 28px; font-weight: 700; }
-QLabel#subtitle { color: #91a49d; font-size: 13px; }
-QFrame#card { background: #1b2527; border: 1px solid #314041; border-radius: 14px; }
-QLabel#section { color: #a4b8af; font-size: 12px; font-weight: 700; }
-QLabel#videoTitle { color: #f1f6f3; font-size: 18px; font-weight: 700; }
-QLabel#platform { color: #7de0ba; font-size: 12px; font-weight: 700; }
-QLabel#cover { background: #142022; border: 1px dashed #3d5551; border-radius: 9px; color: #78928a; }
-QLabel#status { color: #b6c7bf; font-size: 12px; }
-QLineEdit, QComboBox { background: #111b1d; color: #eef5f1; border: 1px solid #425653; border-radius: 7px; padding: 9px 12px; min-height: 20px; selection-background-color: #2ba77c; }
-QLineEdit:focus, QComboBox:focus { border-color: #72d6ad; }
-QLineEdit:disabled, QComboBox:disabled { color: #718981; border-color: #33413e; }
-QComboBox::drop-down { border: none; width: 26px; }
-QComboBox QAbstractItemView { background: #1b2527; color: #edf6f1; selection-background-color: #256c55; padding: 5px; }
-QPushButton { background: #283738; color: #dcebe3; border: 1px solid #405452; border-radius: 7px; padding: 10px 18px; font-weight: 700; }
-QPushButton:hover { background: #344a48; }
-QPushButton:pressed { background: #213532; }
-QPushButton#primary { background: #79d7a9; color: #10251c; border-color: #79d7a9; }
-QPushButton#primary:hover { background: #a2edc5; }
-QPushButton:disabled, QPushButton#primary:disabled { background: #30403d; color: #768d83; border-color: #30403d; }
-QCheckBox { color: #dcebe3; spacing: 7px; }
-QCheckBox::indicator { width: 16px; height: 16px; border: 1px solid #6b8c7f; border-radius: 4px; background: #111b1d; }
-QCheckBox::indicator:checked { background: #79d7a9; border-color: #79d7a9; }
-QProgressBar { background: #23312f; color: #eaf4ec; border: none; border-radius: 6px; text-align: center; min-height: 13px; font-size: 10px; }
-QProgressBar::chunk { background: #79d7a9; border-radius: 6px; }
+QWidget { font-family: "Microsoft YaHei"; font-size: 13px; }
+QWidget#root { background: #17131c; color: #f5f1f8; }
+QScrollArea#scroll { background: #17131c; border: none; }
+QLabel#brand { color: #c6afff; font-size: 15px; font-weight: 700; }
+QLabel#heading { color: #faf7fc; font-size: 24px; font-weight: 700; }
+QLabel#subtitle { color: #b8adbf; font-size: 13px; }
+QFrame#group { background: transparent; border: none; }
+QLabel#section { color: #e1d8e8; font-size: 14px; font-weight: 700; }
+QLabel#videoTitle { color: #faf7fc; font-size: 18px; font-weight: 700; }
+QLabel#platform { color: #c6afff; font-size: 12px; font-weight: 700; }
+QLabel#cover { background: #1b1621; border: 1px solid #43374d; border-radius: 8px; color: #a99ab2; }
+QLabel#status { color: #c4b8cb; font-size: 12px; }
+QLineEdit, QComboBox { background: #241e2b; color: #f5f1f8; border: 1px solid #584c62; border-radius: 7px; padding: 10px 12px; min-height: 24px; selection-background-color: #7657a9; }
+QLineEdit:focus, QComboBox:focus { border-color: #c6afff; }
+QLineEdit:disabled, QComboBox:disabled { color: #8e8097; border-color: #3c3245; }
+QComboBox::drop-down { border: none; width: 36px; }
+QComboBox QAbstractItemView { background: #241e2b; color: #f5f1f8; selection-background-color: #614981; padding: 5px; }
+QPushButton { background: #352c3e; color: #eee7f3; border: 1px solid #53465e; border-radius: 7px; padding: 10px 18px; min-height: 24px; font-weight: 700; }
+QPushButton:hover { background: #463752; }
+QPushButton:pressed { background: #2c2235; }
+QPushButton#primary { background: #c6afff; color: #261934; border-color: #c6afff; }
+QPushButton#primary:hover { background: #d8c8ff; border-color: #d8c8ff; }
+QPushButton:disabled, QPushButton#primary:disabled { background: #342b3b; color: #8f8298; border-color: #342b3b; }
+QCheckBox { color: #eee7f3; spacing: 8px; min-height: 36px; padding: 4px 8px; }
+QCheckBox::indicator { width: 18px; height: 18px; border: 1px solid #877394; border-radius: 4px; background: #1a1521; }
+QCheckBox::indicator:checked { background: #c6afff; border-color: #c6afff; }
+QProgressBar { background: #372d40; color: #f5f1f8; border: none; border-radius: 6px; text-align: center; min-height: 13px; font-size: 10px; }
+QProgressBar::chunk { background: #c6afff; border-radius: 6px; }

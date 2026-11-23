@@ -26,6 +26,25 @@ class GuiSettingsTests(unittest.TestCase):
             window.set_busy(False)
             window.close()
 
+    def test_project_logo_is_loaded(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory, patch("aivideo_gui.SETTINGS_PATH", Path(directory) / "settings.ini"):
+            window = MainWindow()
+            self.assertFalse(window.logo_pixmap.isNull())
+            self.assertFalse(window.windowIcon().isNull())
+            window.close()
+
+    def test_controls_have_comfortable_hit_targets_and_one_font(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory, patch("aivideo_gui.SETTINGS_PATH", Path(directory) / "settings.ini"):
+            window = MainWindow()
+            window.show()
+            self.app.processEvents()
+            for control in (window.url_input, window.query_button, window.quality,
+                            window.save_video, window.save_wav, window.save_txt,
+                            window.destination, window.download_button):
+                self.assertGreaterEqual(control.height(), 44)
+                self.assertEqual(control.font().family(), "Microsoft YaHei")
+            window.close()
+
     def test_restores_geometry_and_download_path(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as directory, patch("aivideo_gui.SETTINGS_PATH", Path(directory) / "settings.ini"):
             first = MainWindow()
