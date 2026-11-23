@@ -3,14 +3,17 @@
 import sys
 from pathlib import Path
 
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QSettings, QThread, pyqtSignal
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QFileDialog, QFrame, QGridLayout,
                              QHBoxLayout, QLabel, QLineEdit, QMainWindow, QProgressBar,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
-from video_service import download_video, existing_video, fetch_cover, query_video
+from video_service import ROOT, download_video, existing_video, fetch_cover, query_video
 from media_outputs import OutputOptions, produce_outputs
+
+
+SETTINGS_PATH = ROOT / ".user-settings.ini"
 
 
 class QueryWorker(QThread):
@@ -69,6 +72,16 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(650, 540)
         self.build_ui()
         self.setStyleSheet(Path(__file__).with_name("aivideo.qss").read_text(encoding="utf-8"))
+        self.settings = QSettings(str(SETTINGS_PATH), QSettings.IniFormat)
+        saved_path = self.settings.value("download/path", "", type=str)
+        if saved_path:
+            self.destination.setText(saved_path)
+        geometry = self.settings.value("window/geometry")
+        if geometry:
+            self.restoreGeometry(geometry)
+            if not any(self.frameGeometry().intersects(screen.availableGeometry()) for screen in QApplication.screens()):
+                screen = QApplication.primaryScreen().availableGeometry()
+                self.move(screen.center() - self.rect().center())
 
     @staticmethod
     def section(text):
@@ -206,12 +219,12 @@ class MainWindow(QMainWindow):
         if not self.busy:
             self.status.setText("等待链接")
 
-    def set_busy(self, busy):
+    def set_busy(self, busy, downloading=False):
         self.busy = busy
         self.query_button.setEnabled(not busy)
         self.url_input.setEnabled(not busy)
         for checkbox in (self.save_video, self.save_wav, self.save_txt):
-            checkbox.setEnabled(not busy)
+            checkbox.setEnabled(not downloading)
         self.quality.setEnabled(not busy and self.info is not None)
         self.download_button.setEnabled(not busy and self.info is not None)
 
@@ -268,7 +281,7 @@ class MainWindow(QMainWindow):
             return
         self.progress.setValue(0)
         self.status.setText("准备下载…")
-        self.set_busy(True)
+        self.set_busy(True, downloading=True)
         self.worker = DownloadWorker(self.info, choice, destination, options)
         self.worker.progress_changed.connect(self.progress_changed)
         self.worker.completed.connect(self.download_done)
@@ -310,6 +323,9 @@ class MainWindow(QMainWindow):
             self.status.setText("当前任务尚未结束，请稍候再关闭窗口")
             event.ignore()
         else:
+            self.settings.setValue("window/geometry", self.saveGeometry())
+            self.settings.setValue("download/path", self.destination.text().strip())
+            self.settings.sync()
             event.accept()
 
     def resizeEvent(self, event):

@@ -9,6 +9,8 @@
 
 同一保存目录中已有该作品的 MP4 时，会直接复用它生成 WAV/TXT；只选 WAV 或 TXT 也不会重新下载或删除已有 MP4。语音识别在独立进程中运行，识别失败会在界面显示错误。
 
+窗口关闭时会将大小、位置和下载目录保存到项目内的 `.user-settings.ini`，下次启动自动恢复。首次启动的窗口大小在 `aivideo_gui.py` 的 `MainWindow.__init__` 中设置。
+
 已有本地视频时，勾选 WAV 或人声 TXT，再点击“从本地视频生成 WAV / TXT”选择视频文件。输出保存在视频所在目录，原视频会保留，不会再次下载。
 
 需要 Python 3.11+。首次运行先执行 `uv sync` 安装依赖。首次转写时 `faster-whisper` 会下载 small 模型，使用本机 CPU 识别，可能需要较长时间。视频处理使用项目内 `ffmpeg/bin/ffmpeg.exe`，配置见 `.env.example`。B 站部分画质可能需要在本地 `.env` 配置登录 Cookie。下载结果取决于平台当前提供的流及访问权限。
