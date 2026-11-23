@@ -76,6 +76,12 @@ class MainWindow(QMainWindow):
         saved_path = self.settings.value("download/path", "", type=str)
         if saved_path:
             self.destination.setText(saved_path)
+        for key, checkbox, default in (
+            ("output/video", self.save_video, True),
+            ("output/wav", self.save_wav, False),
+            ("output/transcript", self.save_txt, False),
+        ):
+            checkbox.setChecked(self.settings.value(key, default, type=bool))
         geometry = self.settings.value("window/geometry")
         if geometry:
             self.restoreGeometry(geometry)
@@ -201,6 +207,7 @@ class MainWindow(QMainWindow):
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
         self.progress.setFixedWidth(190)
+        self.progress.hide()
         bottom.addWidget(self.progress)
         outer.addLayout(bottom)
         outer.addStretch()
@@ -216,6 +223,7 @@ class MainWindow(QMainWindow):
         self.cover.setPixmap(QPixmap())
         self.cover.setText("封面将在这里显示")
         self.progress.setValue(0)
+        self.progress.hide()
         if not self.busy:
             self.status.setText("等待链接")
 
@@ -236,6 +244,8 @@ class MainWindow(QMainWindow):
             self.status.setText("请先粘贴视频链接")
             return
         self.invalidate()
+        self.progress.setRange(0, 0)
+        self.progress.show()
         self.status.setText("正在查询视频、封面和可用画质…")
         self.set_busy(True)
         self.worker = QueryWorker(text)
@@ -258,6 +268,7 @@ class MainWindow(QMainWindow):
         else:
             self.cover.setText("封面暂不可用")
         self.set_busy(False)
+        self.progress.hide()
         self.status.setText(f"查询完成 · 找到 {len(info.choices)} 个可用画质")
 
     def choose_directory(self):
@@ -279,7 +290,9 @@ class MainWindow(QMainWindow):
         except ValueError as error:
             self.status.setText(str(error))
             return
+        self.progress.setRange(0, 100)
         self.progress.setValue(0)
+        self.progress.show()
         self.status.setText("准备下载…")
         self.set_busy(True, downloading=True)
         self.worker = DownloadWorker(self.info, choice, destination, options)
@@ -308,6 +321,7 @@ class MainWindow(QMainWindow):
 
     def failed(self, message):
         self.progress.setRange(0, 100)
+        self.progress.hide()
         self.set_busy(False)
         self.status.setText(f"操作失败：{message}")
         self.status.setToolTip(message)
@@ -325,6 +339,9 @@ class MainWindow(QMainWindow):
         else:
             self.settings.setValue("window/geometry", self.saveGeometry())
             self.settings.setValue("download/path", self.destination.text().strip())
+            self.settings.setValue("output/video", self.save_video.isChecked())
+            self.settings.setValue("output/wav", self.save_wav.isChecked())
+            self.settings.setValue("output/transcript", self.save_txt.isChecked())
             self.settings.sync()
             event.accept()
 
