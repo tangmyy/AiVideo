@@ -2,4 +2,10 @@
 .venv/
 __pycache__/
 *.pyc
+.uv-cache/
+.model-cache/
+ui-preview.png
+*-import.txt
+importtime.txt
 video_*.mp4
+.browser-profile/
