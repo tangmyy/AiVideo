@@ -21,6 +21,7 @@ class DouyinBrowserTests(unittest.TestCase):
     def test_video_id_from_full_url(self):
         self.assertEqual(_video_id("https://www.douyin.com/video/7705471673092427043?foo=1"), "7705471673092427043")
         self.assertEqual(_video_id("https://www.douyin.com/discover?modal_id=7705471673092427043"), "7705471673092427043")
+        self.assertEqual(_video_id("https://www.douyin.com/user/self?from_tab_name=main&modal_id=7705471673092427043&showTab=favorite_collection"), "7705471673092427043")
 
 
 if __name__ == "__main__":

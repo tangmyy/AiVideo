@@ -84,6 +84,11 @@ def detail_fields(item: dict) -> tuple[str, str, str, tuple[BrowserFormat, ...]]
 def fetch_detail(source: str) -> dict:
     """Open the work page and capture the matching detail response it requests."""
     expected = _video_id(source)
+    parsed = urlparse(source)
+    if expected and parsed.path != f"/video/{expected}":
+        # Profile, favorites and search modal pages may never request this work's
+        # detail. The work ID is enough to open its standalone page directly.
+        source = f"https://www.douyin.com/video/{expected}"
     try:
         with sync_playwright() as playwright:
             context = playwright.chromium.launch_persistent_context(
