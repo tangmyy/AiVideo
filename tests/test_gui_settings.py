@@ -99,21 +99,48 @@ class GuiSettingsTests(unittest.TestCase):
             window.batch_mode.click()
             self.assertFalse(window.batch_input.isHidden())
             self.assertTrue(window.url_input.isHidden())
-            self.assertTrue(window.download_button.isHidden())
-            self.assertEqual(window.query_button.text(), "开始批量下载")
+            self.assertTrue(window.query_button.isHidden())
+            self.assertFalse(window.download_button.isHidden())
+            self.assertEqual(window.download_button.text(), "开始批量下载")
+            self.assertEqual(window.result_heading.text(), "当前视频")
             info = VideoInfo("抖音", "https://www.douyin.com/video/123", "Example", "", (FormatChoice("high", "最高画质"),))
             window.batch_item_started(1, 2, info.source)
             window.batch_video_ready(info, b"", info.choices[0], 1, 2)
-            self.assertEqual(window.video_title.text(), "Example")
+            self.assertTrue(window.video_title.isHidden())
+            self.assertEqual(window.cover.toolTip(), "Example")
             self.assertEqual(window.quality.currentData(), info.choices[0])
             self.assertFalse(window.single_result.isHidden())
             window.batch_input.setPlainText("https://v.douyin.com/another/")
+            self.assertTrue(window.batch_log.isHidden())
+            window.batch_item_done(True, "完成 · Example")
+            self.assertTrue(window.batch_log.isHidden())
+            window.batch_item_done(False, "失败 · Example")
+            self.assertFalse(window.batch_log.isHidden())
             with patch.object(window, "start_batch") as start:
-                window.query()
+                window.download()
                 start.assert_called_once()
             window.single_mode.click()
             self.assertFalse(window.url_input.isHidden())
             self.assertTrue(window.batch_input.isHidden())
+            self.assertFalse(window.video_title.isHidden())
+            window.close()
+
+    def test_download_action_is_below_path_field(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory, patch("aivideo_gui.SETTINGS_PATH", Path(directory) / "settings.ini"):
+            window = MainWindow()
+            window.show()
+            self.app.processEvents()
+            self.assertGreater(window.download_button.y(), window.destination.y())
+            window.close()
+
+    def test_single_query_button_sits_beside_link_input(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as directory, patch("aivideo_gui.SETTINGS_PATH", Path(directory) / "settings.ini"):
+            window = MainWindow()
+            window.resize(650, 540)
+            window.show()
+            self.app.processEvents()
+            self.assertGreater(window.query_button.x(), window.url_input.x() + window.url_input.width())
+            self.assertLessEqual(abs(window.query_button.geometry().center().y() - window.url_input.geometry().center().y()), 2)
             window.close()
 
 

@@ -207,23 +207,24 @@ class MainWindow(QMainWindow):
         self.url_input.setClearButtonEnabled(True)
         self.url_input.textChanged.connect(self.invalidate)
         self.url_input.returnPressed.connect(self.query)
-        input_layout.addWidget(self.url_input)
+        self.query_button = QPushButton("查询视频")
+        self.query_button.setMinimumHeight(44)
+        self.query_button.setObjectName("primary")
+        self.query_button.clicked.connect(self.query)
+        single_input_row = QHBoxLayout()
+        single_input_row.setSpacing(10)
+        single_input_row.addWidget(self.url_input, 1)
+        single_input_row.addWidget(self.query_button)
+        input_layout.addLayout(single_input_row)
         self.batch_input = QPlainTextEdit()
         self.batch_input.setPlaceholderText("每行粘贴一条 B 站或抖音链接，也可粘贴分享文案")
         self.batch_input.setMinimumHeight(112)
         self.batch_input.textChanged.connect(self.invalidate_batch)
         self.batch_input.hide()
         input_layout.addWidget(self.batch_input)
-        self.query_button = QPushButton("查询视频")
-        self.query_button.setMinimumHeight(44)
-        self.query_button.setObjectName("primary")
-        self.query_button.clicked.connect(self.query)
-        query_row = QHBoxLayout()
-        query_row.addStretch()
-        query_row.addWidget(self.query_button)
-        input_layout.addLayout(query_row)
 
         result_layout = self.card(outer, "查询结果")
+        self.result_heading = result_layout.itemAt(0).widget()
         result_row = QGridLayout()
         result_row.setHorizontalSpacing(22)
         result_row.setVerticalSpacing(16)
@@ -244,7 +245,8 @@ class MainWindow(QMainWindow):
         self.video_title.setWordWrap(True)
         details.addWidget(self.video_title)
         details.addStretch()
-        details.addWidget(self.section("可用画质"))
+        self.quality_heading = self.section("可用画质")
+        details.addWidget(self.quality_heading)
         self.quality = QComboBox()
         self.quality.setMinimumHeight(44)
         self.quality.setItemDelegate(QualityItemDelegate(self.quality))
@@ -260,7 +262,7 @@ class MainWindow(QMainWindow):
         result_layout.addWidget(self.single_result)
         self.batch_log = QPlainTextEdit()
         self.batch_log.setReadOnly(True)
-        self.batch_log.setPlaceholderText("每条视频的处理结果会显示在这里")
+        self.batch_log.setPlaceholderText("失败的项目会显示在这里")
         self.batch_log.setFixedHeight(94)
         self.batch_log.hide()
         result_layout.addWidget(self.batch_log)
@@ -293,14 +295,17 @@ class MainWindow(QMainWindow):
         self.download_button.setObjectName("primary")
         self.download_button.setEnabled(False)
         self.download_button.clicked.connect(self.download)
-        save_row.addWidget(self.download_button)
         self.cancel_batch_button = QPushButton("完成当前条后停止")
         self.cancel_batch_button.setMinimumHeight(44)
         self.cancel_batch_button.setEnabled(False)
         self.cancel_batch_button.hide()
         self.cancel_batch_button.clicked.connect(self.cancel_batch)
-        save_row.addWidget(self.cancel_batch_button)
         save_layout.addLayout(save_row)
+        action_row = QHBoxLayout()
+        action_row.addStretch()
+        action_row.addWidget(self.cancel_batch_button)
+        action_row.addWidget(self.download_button)
+        save_layout.addLayout(action_row)
 
         bottom = QHBoxLayout()
         self.status = QLabel("等待链接")
@@ -334,9 +339,11 @@ class MainWindow(QMainWindow):
 
     def invalidate_batch(self):
         self.batch_log.clear()
+        self.batch_log.hide()
         if self.batch_mode.isChecked() and not self.busy:
             self.clear_preview()
             self.status.setText("等待批量下载")
+            self.set_busy(False)
 
     def clear_preview(self):
         self.info = None
@@ -352,10 +359,13 @@ class MainWindow(QMainWindow):
         batch = self.batch_mode.isChecked()
         self.url_input.setVisible(not batch)
         self.batch_input.setVisible(batch)
-        self.batch_log.setVisible(batch)
+        self.batch_log.setVisible(batch and bool(self.batch_log.toPlainText()))
         self.cancel_batch_button.setVisible(batch)
-        self.download_button.setVisible(not batch)
-        self.query_button.setText("开始批量下载" if batch else "查询视频")
+        self.query_button.setVisible(not batch)
+        self.download_button.setText("开始批量下载" if batch else "开始下载")
+        self.result_heading.setText("当前视频" if batch else "查询结果")
+        self.quality_heading.setText("自动选择画质" if batch else "可用画质")
+        self.video_title.setVisible(not batch)
         self.progress.hide()
         self.clear_preview()
         self.status.setText("粘贴多条链接后开始批量下载" if batch else "等待链接")
@@ -371,7 +381,8 @@ class MainWindow(QMainWindow):
         for checkbox in (self.save_video, self.save_wav, self.save_txt):
             checkbox.setEnabled(not downloading)
         self.quality.setEnabled(not busy and self.info is not None and self.single_mode.isChecked())
-        self.download_button.setEnabled(not busy and self.info is not None and self.single_mode.isChecked())
+        can_download = bool(self.batch_input.toPlainText().strip()) if self.batch_mode.isChecked() else self.info is not None
+        self.download_button.setEnabled(not busy and can_download)
         self.cancel_batch_button.setEnabled(busy and isinstance(self.worker, BatchWorker))
 
     def query(self):
@@ -415,13 +426,12 @@ class MainWindow(QMainWindow):
     def batch_item_started(self, index, total, source):
         self.clear_preview()
         self.platform.setText(f"第 {index}/{total} 条")
-        self.video_title.setText("正在查询视频…")
+        self.cover.setText("正在查询封面…")
 
     def batch_video_ready(self, info, cover, choice, index, total):
         self.info = info
         self.platform.setText(f"{info.platform} · 第 {index}/{total} 条")
-        self.video_title.setText(info.title)
-        self.video_title.setToolTip(info.title)
+        self.cover.setToolTip(info.title)
         self.quality.clear()
         self.quality.addItem(choice.label, choice)
         pixmap = QPixmap()
@@ -480,6 +490,7 @@ class MainWindow(QMainWindow):
             return
         self.clear_preview()
         self.batch_log.clear()
+        self.batch_log.hide()
         self.progress.setRange(0, 0)
         self.progress.show()
         self.status.setText(f"准备处理 {len(sources)} 条视频…")
@@ -501,7 +512,9 @@ class MainWindow(QMainWindow):
             self.status.setText("当前条处理完成后停止…")
 
     def batch_item_done(self, success, message):
-        self.batch_log.appendPlainText(message)
+        if not success:
+            self.batch_log.show()
+            self.batch_log.appendPlainText(message)
 
     def batch_done(self, result):
         self.progress.hide()
