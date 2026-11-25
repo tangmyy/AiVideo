@@ -64,7 +64,7 @@ class GuiSettingsTests(unittest.TestCase):
             self.assertTrue(second.save_txt.isChecked())
             second.close()
 
-    def test_query_progress_is_busy_then_hidden(self):
+    def test_query_progress_remains_visible(self):
         class Signal:
             def connect(self, _slot):
                 pass
@@ -83,13 +83,16 @@ class GuiSettingsTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory(dir=ROOT) as directory, patch("aivideo_gui.SETTINGS_PATH", Path(directory) / "settings.ini"), patch("aivideo_gui.QueryWorker", Worker):
             window = MainWindow()
-            self.assertTrue(window.progress.isHidden())
+            window.show()
+            self.assertFalse(window.progress.isHidden())
+            self.assertEqual(window.progress.value(), 0)
             window.url_input.setText("BV1vp37zDEVZ")
             window.query()
             self.assertFalse(window.progress.isHidden())
             self.assertEqual((window.progress.minimum(), window.progress.maximum()), (0, 0))
             window.query_done(VideoInfo("B 站", "BV1vp37zDEVZ", "Example", "", (FormatChoice("64:AVC", "720P"),)), b"")
-            self.assertTrue(window.progress.isHidden())
+            self.assertFalse(window.progress.isHidden())
+            self.assertEqual(window.progress.value(), 100)
             window.close()
 
     def test_batch_mode_switches_input_and_shows_current_video(self):
@@ -130,7 +133,8 @@ class GuiSettingsTests(unittest.TestCase):
             window = MainWindow()
             window.show()
             self.app.processEvents()
-            self.assertGreater(window.download_button.y(), window.destination.y())
+            self.assertGreater(window.download_button.mapTo(window, window.download_button.rect().topLeft()).y(), window.destination.mapTo(window, window.destination.rect().topLeft()).y())
+            self.assertEqual(window.progress.mapTo(window, window.progress.rect().topLeft()).y(), window.download_button.mapTo(window, window.download_button.rect().topLeft()).y() + (window.download_button.height() - window.progress.height()) // 2)
             window.close()
 
     def test_single_query_button_sits_beside_link_input(self):

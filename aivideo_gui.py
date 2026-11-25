@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
                 break
         if not self.logo_pixmap.isNull():
             self.setWindowIcon(QIcon(self.logo_pixmap))
-        self.resize(880, 660)
+        self.resize(980, 760)
         self.setMinimumSize(650, 540)
         self.build_ui()
         self.setStyleSheet(Path(__file__).with_name("aivideo.qss").read_text(encoding="utf-8"))
@@ -148,8 +148,8 @@ class MainWindow(QMainWindow):
         frame = QFrame()
         frame.setObjectName("group")
         layout = QVBoxLayout(frame)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        layout.setContentsMargins(22, 20, 22, 22)
+        layout.setSpacing(14)
         layout.addWidget(self.section(label))
         parent.addWidget(frame)
         return layout
@@ -164,25 +164,23 @@ class MainWindow(QMainWindow):
         root.setObjectName("root")
         scroll.setWidget(root)
         outer = QVBoxLayout(root)
-        outer.setContentsMargins(32, 24, 32, 24)
-        outer.setSpacing(26)
+        outer.setContentsMargins(28, 26, 28, 28)
+        outer.setSpacing(18)
         brand_row = QHBoxLayout()
         if not self.logo_pixmap.isNull():
             logo = QLabel()
-            logo.setPixmap(self.logo_pixmap.scaled(28, 28, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            logo.setFixedSize(32, 32)
+            logo.setPixmap(self.logo_pixmap.scaled(32, 32, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            logo.setFixedSize(36, 36)
             brand_row.addWidget(logo)
         brand = QLabel("AiVideo")
         brand.setObjectName("brand")
         brand_row.addWidget(brand)
         brand_row.addStretch()
-        outer.addLayout(brand_row)
-        title = QLabel("视频下载")
+        title = QLabel("视频下载工作台")
         title.setObjectName("heading")
-        outer.addWidget(title)
-        subtitle = QLabel("粘贴链接，查看封面和画质，再选择需要的文件。")
-        subtitle.setObjectName("subtitle")
-        outer.addWidget(subtitle)
+        title.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        brand_row.addWidget(title)
+        outer.addLayout(brand_row)
 
         input_layout = self.card(outer, "视频链接")
         mode_row = QHBoxLayout()
@@ -203,7 +201,7 @@ class MainWindow(QMainWindow):
         input_layout.addLayout(mode_row)
         self.url_input = QLineEdit()
         self.url_input.setMinimumHeight(44)
-        self.url_input.setPlaceholderText("BV 号、视频链接，或包含抖音短链的分享文案")
+        self.url_input.setPlaceholderText("例如：BV1vDxa6UEHY 或 https://v.douyin.com/…")
         self.url_input.setClearButtonEnabled(True)
         self.url_input.textChanged.connect(self.invalidate)
         self.url_input.returnPressed.connect(self.query)
@@ -217,7 +215,7 @@ class MainWindow(QMainWindow):
         single_input_row.addWidget(self.query_button)
         input_layout.addLayout(single_input_row)
         self.batch_input = QPlainTextEdit()
-        self.batch_input.setPlaceholderText("每行粘贴一条 B 站或抖音链接，也可粘贴分享文案")
+        self.batch_input.setPlaceholderText("每行一条链接或分享文案")
         self.batch_input.setMinimumHeight(112)
         self.batch_input.textChanged.connect(self.invalidate_batch)
         self.batch_input.hide()
@@ -228,7 +226,7 @@ class MainWindow(QMainWindow):
         result_row = QGridLayout()
         result_row.setHorizontalSpacing(22)
         result_row.setVerticalSpacing(16)
-        self.cover = QLabel("封面将在这里显示")
+        self.cover = QLabel("视频封面。粘贴链接后查询视频。")
         self.cover.setObjectName("cover")
         self.cover.setAlignment(Qt.AlignCenter)
         self.cover.setFixedSize(300, 180)
@@ -240,7 +238,7 @@ class MainWindow(QMainWindow):
         self.platform = QLabel("等待查询")
         self.platform.setObjectName("platform")
         details.addWidget(self.platform)
-        self.video_title = QLabel("选择一条视频，查看它的画质")
+        self.video_title = QLabel("视频标题。粘贴链接后查询视频。")
         self.video_title.setObjectName("videoTitle")
         self.video_title.setWordWrap(True)
         details.addWidget(self.video_title)
@@ -262,7 +260,7 @@ class MainWindow(QMainWindow):
         result_layout.addWidget(self.single_result)
         self.batch_log = QPlainTextEdit()
         self.batch_log.setReadOnly(True)
-        self.batch_log.setPlaceholderText("失败的项目会显示在这里")
+        self.batch_log.setPlaceholderText("失败记录会显示在这里")
         self.batch_log.setFixedHeight(94)
         self.batch_log.hide()
         result_layout.addWidget(self.batch_log)
@@ -301,24 +299,25 @@ class MainWindow(QMainWindow):
         self.cancel_batch_button.hide()
         self.cancel_batch_button.clicked.connect(self.cancel_batch)
         save_layout.addLayout(save_row)
-        action_row = QHBoxLayout()
-        action_row.addStretch()
-        action_row.addWidget(self.cancel_batch_button)
-        action_row.addWidget(self.download_button)
-        save_layout.addLayout(action_row)
 
-        bottom = QHBoxLayout()
+        progress_layout = self.card(outer, "下载进度")
         self.status = QLabel("等待链接")
         self.status.setObjectName("status")
         self.status.setWordWrap(True)
-        bottom.addWidget(self.status, 1)
+        progress_layout.addWidget(self.status)
+
+        action_row = QHBoxLayout()
+        action_row.setSpacing(14)
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
-        self.progress.setFixedWidth(190)
-        self.progress.hide()
-        bottom.addWidget(self.progress)
-        outer.addLayout(bottom)
+        self.progress.setFormat("0% · 等待开始")
+        self.progress.setMinimumHeight(34)
+        action_row.addWidget(self.progress, 1)
+        action_row.addWidget(self.cancel_batch_button)
+        self.download_button.setMinimumWidth(190)
+        action_row.addWidget(self.download_button)
+        progress_layout.addLayout(action_row)
         outer.addStretch()
 
     def invalidate(self):
@@ -329,11 +328,12 @@ class MainWindow(QMainWindow):
         if self.single_mode.isChecked():
             self.download_button.setEnabled(False)
         self.platform.setText("等待查询")
-        self.video_title.setText("选择一条视频，查看它的画质")
+        self.video_title.setText("视频标题。粘贴链接后查询视频。")
         self.cover.setPixmap(QPixmap())
-        self.cover.setText("封面将在这里显示")
+        self.cover.setText("视频封面。粘贴链接后查询视频。")
+        self.progress.setRange(0, 100)
         self.progress.setValue(0)
-        self.progress.hide()
+        self.progress.setFormat("0% · 等待开始")
         if not self.busy:
             self.status.setText("等待链接")
 
@@ -348,12 +348,12 @@ class MainWindow(QMainWindow):
     def clear_preview(self):
         self.info = None
         self.platform.setText("等待查询")
-        self.video_title.setText("当前视频的封面与画质将在这里显示")
+        self.video_title.setText("当前视频。开始批量下载后显示。")
         self.quality.clear()
         self.quality.addItem("等待查询")
         self.quality.setEnabled(False)
         self.cover.setPixmap(QPixmap())
-        self.cover.setText("封面将在这里显示")
+        self.cover.setText("视频封面。粘贴链接后查询视频。")
 
     def switch_mode(self):
         batch = self.batch_mode.isChecked()
@@ -366,7 +366,9 @@ class MainWindow(QMainWindow):
         self.result_heading.setText("当前视频" if batch else "查询结果")
         self.quality_heading.setText("自动选择画质" if batch else "可用画质")
         self.video_title.setVisible(not batch)
-        self.progress.hide()
+        self.progress.setRange(0, 100)
+        self.progress.setValue(0)
+        self.progress.setFormat("0% · 等待开始")
         self.clear_preview()
         self.status.setText("粘贴多条链接后开始批量下载" if batch else "等待链接")
         self.set_busy(False)
@@ -393,11 +395,11 @@ class MainWindow(QMainWindow):
         if self.busy:
             return
         if not text:
-            self.status.setText("请先粘贴视频链接")
+            self.status.setText("没有视频链接。请在上方粘贴链接后查询。")
             return
         self.invalidate()
         self.progress.setRange(0, 0)
-        self.progress.show()
+        self.progress.setFormat("正在查询…")
         self.status.setText("正在查询视频、封面和可用画质…")
         self.set_busy(True)
         self.worker = QueryWorker(text)
@@ -418,10 +420,12 @@ class MainWindow(QMainWindow):
         if cover and pixmap.loadFromData(cover):
             self.cover.setPixmap(pixmap.scaled(self.cover.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
         else:
-            self.cover.setText("封面暂不可用")
+            self.cover.setText("未取得封面。仍可继续下载。")
         self.set_busy(False)
-        self.progress.hide()
-        self.status.setText(f"查询完成 · 找到 {len(info.choices)} 个可用画质")
+        self.progress.setRange(0, 100)
+        self.progress.setValue(100)
+        self.progress.setFormat("查询完成")
+        self.status.setText(f"已找到 {len(info.choices)} 个画质。选择画质后开始下载。")
 
     def batch_item_started(self, index, total, source):
         self.clear_preview()
@@ -438,7 +442,7 @@ class MainWindow(QMainWindow):
         if cover and pixmap.loadFromData(cover):
             self.cover.setPixmap(pixmap.scaled(self.cover.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
         else:
-            self.cover.setText("封面暂不可用")
+            self.cover.setText("未取得封面。仍可继续下载。")
 
     def choose_directory(self):
         path = QFileDialog.getExistingDirectory(self, "选择保存目录", self.destination.text())
@@ -454,7 +458,7 @@ class MainWindow(QMainWindow):
         choice = self.quality.currentData()
         destination = self.destination.text().strip()
         if not choice or not destination:
-            self.status.setText("请选择画质和保存目录")
+            self.status.setText("缺少画质或保存目录。请补全后重试。")
             return
         options = OutputOptions(self.save_video.isChecked(), self.save_wav.isChecked(), self.save_txt.isChecked())
         try:
@@ -464,7 +468,7 @@ class MainWindow(QMainWindow):
             return
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
-        self.progress.show()
+        self.progress.setFormat("%p%")
         self.status.setText("准备下载…")
         self.set_busy(True, downloading=True)
         self.worker = DownloadWorker(self.info, choice, destination, options)
@@ -486,13 +490,13 @@ class MainWindow(QMainWindow):
             return
         destination = self.destination.text().strip()
         if not destination:
-            self.status.setText("请选择保存目录")
+            self.status.setText("未填写保存目录。请选择目录后重试。")
             return
         self.clear_preview()
         self.batch_log.clear()
         self.batch_log.hide()
         self.progress.setRange(0, 0)
-        self.progress.show()
+        self.progress.setFormat("准备中…")
         self.status.setText(f"准备处理 {len(sources)} 条视频…")
         self.worker = BatchWorker(sources, destination, options)
         self.worker.progress_changed.connect(self.progress_changed)
@@ -517,7 +521,9 @@ class MainWindow(QMainWindow):
             self.batch_log.appendPlainText(message)
 
     def batch_done(self, result):
-        self.progress.hide()
+        self.progress.setRange(0, 100)
+        self.progress.setValue(100)
+        self.progress.setFormat("处理结束")
         self.set_busy(False)
         state = "已停止" if result.cancelled else "已完成"
         self.status.setText(f"批量下载{state}：成功 {result.completed} 条，失败 {result.failed} 条")
@@ -525,25 +531,29 @@ class MainWindow(QMainWindow):
     def progress_changed(self, value, stage):
         if value < 0 or value == 98:
             self.progress.setRange(0, 0)
+            self.progress.setFormat("处理中…")
             self.status.setText(stage)
         else:
             self.progress.setRange(0, 100)
             self.progress.setValue(value)
+            self.progress.setFormat("%p%")
             self.status.setText(f"{stage} · {value}%")
 
     def download_done(self, paths):
         self.progress.setRange(0, 100)
         self.progress.setValue(100)
+        self.progress.setFormat("100% · 已完成")
         self.set_busy(False)
         names = "、".join(Path(path).name for path in paths)
-        self.status.setText(f"处理完成：{names}")
+        self.status.setText(f"已保存：{names}")
         self.status.setToolTip("\n".join(paths))
 
     def failed(self, message):
         self.progress.setRange(0, 100)
-        self.progress.hide()
+        self.progress.setValue(0)
+        self.progress.setFormat("操作失败")
         self.set_busy(False)
-        self.status.setText(f"操作失败：{message}")
+        self.status.setText(f"操作失败：{message} 请根据错误信息处理后重试。")
         self.status.setToolTip(message)
 
     def worker_finished(self):
