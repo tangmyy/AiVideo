@@ -120,7 +120,7 @@ class MainWindow(QMainWindow):
         self.resize(980, 760)
         self.setMinimumSize(650, 540)
         self.build_ui()
-        self.setStyleSheet(Path(__file__).with_name("aivideo.qss").read_text(encoding="utf-8"))
+        self.setStyleSheet((ROOT / "aivideo.qss").read_text(encoding="utf-8"))
         self.settings = QSettings(str(SETTINGS_PATH), QSettings.IniFormat)
         saved_path = self.settings.value("download/path", "", type=str)
         if saved_path:
@@ -593,6 +593,10 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 4 and sys.argv[1] == "--transcribe":
+        from media_outputs import _transcribe
+        _transcribe(Path(sys.argv[2]), Path(sys.argv[3]), lambda _value, stage: print(stage, flush=True))
+        raise SystemExit(0)
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     app.setFont(QFont("Microsoft YaHei", 10))

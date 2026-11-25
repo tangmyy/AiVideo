@@ -4,6 +4,7 @@ import asyncio
 import os
 import re
 import subprocess
+import sys
 import tempfile
 import uuid
 from dataclasses import dataclass
@@ -22,11 +23,13 @@ from bilibili_api.video import (
 from dotenv import load_dotenv
 from douyin_browser import detail_fields, download_format, fetch_detail
 
-load_dotenv()
 # aiohttp's Brotli decoder can fail with the Brotli build bundled in this
 # environment. Bilibili accepts gzip/deflate, which avoids that decoder.
 HEADERS["Accept-Encoding"] = "gzip, deflate"
-ROOT = Path(__file__).resolve().parent
+ROOT = (Path(os.environ["AIVIDEO_DATA_DIR"]) if os.getenv("AIVIDEO_DATA_DIR")
+        else Path(sys.executable).resolve().parent if getattr(sys, "frozen", False)
+        else Path(__file__).resolve().parent)
+load_dotenv(ROOT / ".env")
 URL_PATTERN = re.compile(r"https?://[^\s<>\"'，。]+", re.I)
 BV_PATTERN = re.compile(r"^BV[0-9A-Za-z]{10}$", re.I)
 

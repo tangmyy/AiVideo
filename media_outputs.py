@@ -83,9 +83,12 @@ def _transcribe(wav_path: Path, txt_path: Path, progress):
 def _run_transcribe(wav_path: Path, txt_path: Path, progress):
     """Keep native model failures outside the GUI process."""
     progress(98, "正在独立进程中识别人声")
+    command = ([str(ROOT / "transcriber" / "AiVideoTranscriber.exe"), "--transcribe"] if getattr(sys, "frozen", False)
+               else [sys.executable, "-X", "faulthandler", str(Path(__file__).resolve()), "--transcribe"])
     result = subprocess.run(
-        [sys.executable, "-X", "faulthandler", str(Path(__file__).resolve()), "--transcribe", str(wav_path), str(txt_path)],
+        [*command, str(wav_path), str(txt_path)],
         capture_output=True, text=True, errors="replace", cwd=ROOT,
+        env={**os.environ, "AIVIDEO_DATA_DIR": str(ROOT)},
     )
     if result.returncode != 0:
         detail = (result.stderr or result.stdout).strip()[-1000:]

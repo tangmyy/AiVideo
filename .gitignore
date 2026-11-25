@@ -10,3 +10,9 @@ importtime.txt
 video_*.mp4
 .browser-profile/
 .user-settings.ini
+build/
+dist/
+.pyinstaller-cache/
+*.spec.bak
+AiVideoTranscriber.spec
+build-*.log
